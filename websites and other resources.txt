@@ -1,0 +1,5 @@
+websites:
+udacity.com, google.com, stackoverflow.com, github.com, youtube.com, and etc.
+
+books: 
+Art of R programming, R cookbook

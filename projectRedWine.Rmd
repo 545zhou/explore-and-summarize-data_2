@@ -1,0 +1,632 @@
+Red Wine Quality Exploration by Tao Zhou
+========================================================
+
+One thing I want to mention on the start is that this .rmd file is able be "knit"ed to HTML successfully. But I find that very rarely the processing is halted. When such an occasion happens, just "knit" it again. 
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, packages}
+# Load all of the packages that you end up using
+# in your analysis in this code chunk.
+
+library(ggplot2)
+library(scales)
+library(GGally)
+library(memisc)
+library(gridExtra)
+```
+
+Before the exploration, we have to load the data. The data set I chose is Red Wine Quality. I chose this data set mainly because its size is suitable for my laptop, which does not require a very high performance. The other reason is that I'm interested in which features determine the quality of red wine. It's what I'm going to explore in this project. By finding the features that affect the quality of red wine, I may be able to build a math model to predict the quality of one sample of red wine.
+
+```{r echo=FALSE, Load_the_Data}
+pf <- read.csv('wineQualityReds.csv', sep = ',')
+```
+
+# Univariate Plots Section
+```{r echo=FALSE}
+dim(pf)
+```
+
+```{r echo=FALSE}
+names(pf)
+```
+
+"X" is just the entry order not one feature. So I would like to delete this column and then see the structure of data frame. 
+```{r echo=FALSE}
+pf$X = NULL
+str(pf)
+```
+
+```{r echo=FALSE}
+summary(pf)
+```
+
+Let's have a look at the distritution of red wine quality. Later I want to explore the distribution of features that may affect the quality of wine.
+
+```{r echo=FALSE}
+qplot(x = quality, data = pf, binwidth = 1) 
+```  
+
+The quality distribution is similar to a normal distribution. There is no gap or long tail. But what is interesting is that there is no wine of extreme quality. All enties have a quality value between 3 and 8, and most are 5 or 6. (0 is the poorest quality and 10 is the highest.)
+
+Now let's check the fixed acidity distribution.
+
+```{r echo=FALSE}
+qplot(x = fixed.acidity, data = pf) 
+```
+
+Most of the fixed acidity values are located between 7.0 and 9.0. The distribution have a tail. But since it's very small, I'm not going to cut it.
+
+Check the distribution of valatile acidity
+
+```{r echo=FALSE}
+qplot(x = volatile.acidity, data = pf)
+```
+
+The values of vaolatile acidity are mainly between 0.0 and 1.0. There are a small number of points larger than 1.1. They are outliers. I'm going to cut the outliers larger than 1.1 in the next code chunk. 
+
+```{r echo=FALSE}
+#cut the outliers
+pf <- pf[pf$volatile.acidity < 1.1,]
+#draw distribution after cutting tail
+qplot(x = volatile.acidity, data = pf)
+```
+
+After cutting tail, the new distribuion of volatile acidity is above. We see there are two peaks, one is at about 0.4 ant the other 0.6.
+
+Check the distribution of citric acid.
+
+```{r echo=FALSE}
+qplot(x = citric.acid, data = pf)
+```
+
+The distribution of citric acid is very different from normal distribution or skew distribution. We can see there are a lot of samples having citric acid at zero. That means there is no citric acid in those samples. There is also outliers larger than 0.9. I will cut it.
+
+```{r echo=FALSE}
+#cut the outliers
+pf <- pf[pf$citric.acid < 0.9,]
+#draw distribution after cutting tail
+qplot(x = citric.acid, data = pf)
+```
+
+There are a lot of samples which have 0 citric acid. And from 0.02 to 0.5, the distribution is pretty random. Then from 0.5 to 0.8, the distribution is decreasing.
+
+Check the distribution of residual sugar.
+
+```{r echo=FALSE}
+qplot(x = residual.sugar, data = pf)
+```
+
+The distribution of residual sugar has a long tail. Most samples have a value of residual sugar between 1 and 5. I will cut the outliers with a value larger than 8.
+
+```{r echo=FALSE}
+#cut the outliers
+pf <- pf[pf$residual.sugar < 8,]
+qplot(x = residual.sugar, data = pf)
+```
+
+It's interesting to see that after cutting tails larger than 8, the new distribution still have a very long tail. Next, I'm going to cut the values larger than 4.
+
+```{r echo=FALSE}
+#cut the outliers
+pf <- pf[pf$residual.sugar < 4,]
+#draw distribution after cutting tail
+qplot(x = residual.sugar, data = pf)
+```
+
+Now the distribution is very simlilar to normal distribution.
+
+Check the distribution of chlorides.
+
+```{r echo=FALSE}
+qplot(x = chlorides, data = pf)
+```
+
+If we compare the distribution of residual sugar before cutting tail and that of chlorides, we can see the distribution shapes are very similar. That is interesting. I will cut the outliers with a value larger than 0.3.
+
+```{r echo=FALSE}
+#cut the outliers
+pf <- pf[pf$chlorides < 0.3,]
+#draw distribution after cutting tail
+qplot(x = chlorides, data = pf)
+```
+
+Continue cutting values larger than 0.14 or smaller than 0.02.
+
+```{r echo=FALSE}
+#cut the outliers
+pf <- pf[pf$chlorides < 0.14 & pf$chlorides > 0.02,]
+qplot(x = chlorides, data = pf)
+```
+
+The new distribution is very similar to normal disitribution. Most points locate between 0.050 and 0.100.
+
+Check the distribution of free sulfur dioxide.
+
+```{r echo=FALSE}
+qplot(x = free.sulfur.dioxide, data = pf)
+```
+
+The distribution is very similar to skew distribution. Most of the values are between 0 and 20.
+
+Check the distribution of total sulfur dioxide.
+
+```{r echo=FALSE}
+qplot(x = total.sulfur.dioxide, data = pf)
+```
+
+The distribution is like a skew distribution. Most of the values are between 0 and 100. 
+
+
+Check the distribution of density.
+
+```{r echo=FALSE}
+qplot(x = density, data = pf)
+```
+
+This distribution is a perfect normal distribution. It's interesting to see most part of density is below 1.0, which is the density of pure water. I guess that's because there is alcohol in wine and aclcohol density is smaller than water. 
+
+Check the distribution of pH.
+
+```{r echo=FALSE}
+qplot(x = pH, data = pf)
+```
+
+Most pH value is between 3.0 and 3.6. No pH is larger than 7, which is the pH of water. That makes sense.
+
+Check the distribution of sulphates.
+
+```{r echo=FALSE}
+qplot(x = sulphates, data = pf)
+```
+
+The shape of distribution reminds me that maybe I can change the x scale to log scale. But before doing that, I want to cut the outliers with values larger than 1.5.
+
+```{r echo=FALSE}
+#cut the outliers
+pf <- pf[pf$sulphates < 1.5,]
+#draw distribution after cutting tail
+qplot(x = sulphates, data = pf) + scale_x_log10()
+```
+
+Yes. It looks like another normal distribution. 
+
+Check the distribution of alcohol.
+
+```{r echo=FALSE}
+qplot(x = alcohol, data = pf)
+```
+
+It looks like a skew distribution. All samples have an alcohol value larger than 8 but smaller than 15. That's a typical alcohol range for red wine.
+
+After cutting the outliers as I did above, let's now count how many samples left.
+
+```{r echo=FALSE}
+str(pf)
+```
+
+# Univariate Analysis
+
+### What is the structure of your dataset?
+
+Before cutting the outliers, there are 1599 red wine samples in the dataset with 12 features ("fixed.acidity", "volatile.acidity", "citric.acid", "residual.sugar", "chlorides", "free.sulfur.dioxide", "total.sulfur.dioxide", "density", "pH", "sulphates", "alcohol", "quality"). I haven't created any new feature but I may do so when exploring deeper. After cutting the outliers, there are 1384 samples left. 
+
+### What is/are the main feature(s) of interest in your dataset?
+
+The main feature of interest in the data set is quality. This feature may be determined by or have a correlation to the combination of other features, although it's not direct to see which are those features. That's what I want to explore later.
+
+### What other features in the dataset do you think will help support your investigation into your feature(s) of interest?
+
+All the other features may conbribute to the quality, althogh I think density may not contribute as much as alcohol. Citric acid may also be important in the determination of quality, but this guess has be verified in the deeper exploration. 
+
+
+### Did you create any new variables from existing variables in the dataset?
+
+I have not created any new variables. If the exploration needs, I may want to create new variables later. 
+
+### Of the features you investigated, were there any unusual distributions? Did you perform any operations on the data to tidy, adjust, or change the form of the data? If so, why did you do this?
+
+Most of the features are of normal or skew distribution. The citric acid distribution is kind of unusual. It has a very big bar at 0. And the most of the rest part pretty random. 
+
+I did delete the first column since "X" is just the entry id not one feature. 
+
+I also deltete the outliers to suppress noise so that in the later bivariate and mulitvariate sections it would be easier to show the correlation. 
+
+# Bivariate Plots Section
+
+```{r echo=FALSE}
+cor(pf)
+```
+
+Fixed acidity and citric acid has a strong correlation. It is possible that citric acid is one main component of fixed acidity. Fixed acidity and pH also have a strong correlation. This is easy to understand. What is interesting is that density strongly depends on fixed acidity. I did not predict that. It is possible that the components in the red wine producing fixed acidity have larger density than other components. 
+
+Free sulfur dioxide and total sulfur dioxide have very similar distribution. They also have a strong correlation. That is predictable. 
+
+Although the distributions of residual sugar and chlorites are very simlar, the correlation between them is acturally very very weak.
+
+The feature I'm interested in is quality. It shows that the quality has a pretty large correlation with alochol (with a value of 0.49). The most possible features that quality depends on are: alcohol, sulphates, volatile acidity, citric acid, total sulfur dioxide. 
+
+I want to use the ggpair table to show the correlation between each features. But at first I want to copy the dataset and change the names to shorter ones. 
+
+```{r echo=FALSE}
+#copy the dataset to a temopary name
+pf_temp <- pf
+#rename featurs
+names(pf_temp) <- c("f.a", "v.a", 
+                    "c.a", "r.s", 
+                    "chl", "fsd", 
+                    "tsd", "den", 
+                    "pH", "sul", 
+                    "alc", "qua")
+#draw ggpari plot
+ggpairs(pf_temp, 
+        params = c(shape = I('.'),
+                   outlier.shape = I('.'), 
+                   grid = NA), 
+        lower=list(continuous="smooth", 
+                   params=c(colour="red", 
+                            alpha = 0.1)), 
+        diag=list(continuous="bar", 
+                  params=c(colour="green")), 
+        upper=list(params=list(cex= 2.4)), 
+        axisLabels='none') 
+
+# remove  the dataset
+remove(pf_temp)
+```
+
+To explore deeper, let me use scatter plots involving quality and the features which have an absoulute correlation larger than 0.1 with quality: "fixed.acidity", "volatile.acidity", "citric.acid", "chlorides","total.sulfur.dioxide", "density", "sulphates" and "alcohol". I will also create a new feature called qualFact which is "factorized" quality, so that I can draw boxplots and use quality as category. 
+
+In the following plots, I would like to use "geom_jitter" instead of "geom_point" to separate the points. 
+
+The red dots in the boxplot means they are outliers.
+
+Check scatter plot of quality VS fixed acidty and the boxplot of fixed acidity.
+
+```{r echo=FALSE}
+#draw scatter plot
+ggplot(aes(x = fixed.acidity, y = quality), data = pf) +
+  geom_jitter(alpha = 0.3) + ylim(0, 10)
+#crated "qualFact" which is fatorised quality
+pf$qualFact = factor(pf$quality, ordered = TRUE)
+#draw boxplot
+ggplot(aes(x = qualFact, y = fixed.acidity), data = pf) +
+  geom_boxplot(outlier.colour = alpha("black", 0.1)) +
+  geom_point(alpha = 0.1)
+```
+
+From the scatter plot we can not see clear correlation between fixed acidity and quality. But we do see that for most of wine having a quality 5 or 6, the fixed acidity is 6 to 9. The trend of medan and average from the boxplot is not very clear. The correlation between quality and fixed acidity is weak.
+
+Check plot of quality VS volatile acidity and the boxplot of volatile acidity.
+
+```{r echo=FALSE}
+#draw scatter plot
+ggplot(aes(x = volatile.acidity, y = quality), data = pf) + 
+  geom_jitter(alpha = 0.3) + ylim(0, 10)
+#draw boxplot
+ggplot(aes(x = qualFact, y = volatile.acidity), data = pf) +
+  geom_boxplot(outlier.colour = alpha("black", 0.1)) +
+  geom_point(alpha = 0.1)
+```
+
+The scatter plot shows more obvious correlation than the previous one for fixed acidity. We can see there is a trend that when volatile acidity increases, quality decreases. The trends of average and median from the boxplot are even more obvious to show such a correlation.
+
+Check scatter plot of quality VS citric acid and boxplot of citric acid.
+
+```{r echo=FALSE}
+#draw scatter plot
+ggplot(aes(x = citric.acid, y = quality), data = pf) + 
+  geom_jitter(alpha = 0.3) + ylim(0, 10)
+#draw boxplot
+ggplot(aes(x = qualFact, y = citric.acid), data = pf) +
+  geom_boxplot(outlier.colour = alpha("black", 0.1))  +
+  geom_point(alpha = 0.1)
+```
+
+The citric acid is almost distributed uniformly on each quality in the scatter plot. There is no clear correlaiton from the scatter plot. But from the boxplot, the trends of median and average are pretty clear. When citric acid increases, quality increases. 
+
+Check scatter plot of quality VS chlorides and boxplot of chlorides.
+
+```{r echo=FALSE}
+#draw scatter plot
+ggplot(aes(x = chlorides, y = quality), data = pf) + 
+  geom_jitter(alpha = 0.3) + ylim(0, 10)
+#draw boxplot
+ggplot(aes(x = qualFact, y = chlorides), data = pf) +
+  geom_boxplot(outlier.colour = alpha("black", 0.1))  + 
+  geom_point(alpha = 0.1)
+```
+
+The correlation on this plot is also not very clear. But if we look at the scatter plot, it shows vaguely that when chlorides decreases, quality increases. The trends of average and median both show that when chlorides decreases, quality increases. But the correlation is not very strong.
+
+Check scatter plot of quality VS total sulfur dioxide and the boxplot of total sulfur dioxide.
+
+```{r echo=FALSE}
+#draw scatter plot
+ggplot(aes(x = total.sulfur.dioxide, y = quality), data = pf) +
+  geom_jitter(alpha = 0.3) + ylim(0, 10)
+#draw boxplot
+ggplot(aes(x = qualFact, y = total.sulfur.dioxide), data = pf) +
+  geom_boxplot(outlier.colour = alpha("black", 0.1))  +
+  geom_point(alpha = 0.1)
+```
+
+The correlaiton is not clear on scatter polt. The trends of average and median show that the relation between tota sulfur dioxide and quality is not linear. So adding total sulfur dioxide into the linear model to predict quality may not help. 
+
+Check scatter plot of quality VS density and the boxplot of density.
+
+```{r echo=FALSE}
+#draw scatter plot
+ggplot(aes(x = density, y = quality), data = pf) +
+  geom_jitter(alpha = 0.3) + ylim(0, 10)
+#draw boxplot
+ggplot(aes(x = qualFact, y = density), data = pf) +
+  geom_boxplot(outlier.colour = alpha("black", 0.1))  + 
+  geom_point(alpha = 0.1)
+```
+
+Most points are focusing in the area with density between 0.995 and 0.9975, and quality 5 and 6. The correltion is not very clear. This boxplot shows correlation more obvious than the scatter plot of quality VS density. The trends of median and average both show that when density decreases, quality increases. 
+
+Check scatter plot of quality VS sulphates and the boxplot of sulphates.
+
+```{r echo=FALSE}
+#draw scatter plot
+ggplot(aes(x = sulphates, y = quality), data = pf) +
+  geom_jitter(alpha = 0.3) + ylim(0, 10)
+
+ggplot(aes(x = qualFact, y = sulphates), data = pf) +
+  geom_boxplot(outlier.colour = alpha("black", 0.1))  + 
+  geom_point(alpha = 0.1)
+```
+
+The scatter plot shows that when sulphates increases, quality also increases. The trend of mdeian and average in boxplot also shows that. 
+
+Check scatter plot of quality VS alcohol and the boxplot of alcohol.
+
+```{r echo=FALSE}
+#draw scatter plot
+ggplot(aes(x = alcohol, y = quality), data = pf) +
+  geom_jitter(alpha = 0.3) + ylim(0, 10)
+#draw boxplot
+ggplot(aes(x = qualFact, y = alcohol), data = pf) +
+  geom_boxplot(outlier.colour = alpha("black", 0.1))  + 
+  geom_point(alpha = 0.1)
+```
+
+The scatter plot shows pretty clearly that when alcohol increases, quality increases. The median and average in the boxplot is also very clear on this point, although there is an exception at quality 5. 
+
+
+One thing I notice is that compared to scatter plot, boxplot has an advantage. It can reduce noises from outliers and show more clear relationship between two variables. 
+
+There is strong correlation between pH and fixed acidity from the corrlation table. I would like to draw a scatter plot to show that.
+
+```{r echo=FALSE}
+#draw scatter plot
+ggplot(aes(x = fixed.acidity, y = pH), data = pf) +
+  geom_jitter(alpha = 0.3)
+```
+
+When fixed acidity increases, pH decreases. 
+
+And there is strong correlation between fixed acidity and density. 
+
+```{r echo=FALSE}
+#draw scatter plot
+ggplot(aes(x = fixed.acidity, y = density), data = pf) +
+  geom_jitter(alpha = 0.3)
+``` 
+
+This is interesting. As I mentioned before, my guess is that components producing fixed acidity in red wine tend to have higher density than other components in red wine.
+
+# Bivariate Analysis
+
+### Talk about some of the relationships you observed in this part of the investigation. How did the feature(s) of interest vary with other features in the dataset?
+
+The feature of interest is quality. From the above plots and calculation, we can see when alochol, citric acid and sculphates increases, quality increases. And when volatile acidity, density and sculphates decreases, quality increases. Alcohol, sulphates and volatile acidity are the three most important features affecting quality.
+
+
+### Did you observe any interesting relationships between the other features (not the main feature(s) of interest)?
+
+Yes. I explored the correlation between fixed acidity and pH. They have strong negative correlation. I also explored the correlation between fixed acidity and density. Red wine with higher fixed acidity tends to have higher density.
+
+### What was the strongest relationship you found?
+
+From the calculation of correlation, the strongest correlation is between fixed acidity and pH. 
+
+# Multivariate Plots Section
+
+From the bivariate analysis above, I know that alcohol is the most important feature affecting quality. I want to draw a scattering plot of alcohol and quality, with points colored by other features. To make the trend more clear, I'm going to continously use "geom_jitter".
+
+Plot using volatile acidity as color.
+
+```{r echo=FALSE}
+qplot(x = alcohol, y= quality, data = pf, color = volatile.acidity) + 
+  geom_jitter(pch = 16, alpha = 0.4) + 
+  scale_colour_gradient(low = 'green', high = 'red')
+```
+
+It's pretty clear that wine quality goes higher with lower volatile acidity when holding alcohol constant. 
+
+Let's explore some other scatter plots, continuously using alcohol to be points' x axis, quality the y axis and other features the color.
+
+Plot using sulphates as color.
+
+```{r echo=FALSE}
+qplot(x = alcohol, y= quality, data = pf, color = sulphates) +
+  geom_jitter(pch = 16, alpha = 0.4) + 
+  scale_colour_gradient(low = 'green', high = 'red')
+```
+
+It shows when alchol keeps constant, higher sulphates means higher quality. 
+
+Plot using fixed acidity as color.
+
+```{r echo=FALSE}
+qplot(x = alcohol, y= quality, data = pf, color = fixed.acidity) + 
+  geom_jitter(pch = 16, alpha = 0.4) +
+  scale_colour_gradient(low = 'green', high = 'red')
+```
+
+This plot is vaguely shows that when holding alcohol constant, higher fixed acidity seems to bring higher quality. 
+
+Plot using density as color.
+
+```{r echo=FALSE}
+qplot(x = alcohol, y= quality, data = pf, color = density) + 
+  geom_jitter(pch = 16, alpha = 0.4) +
+  scale_colour_gradient(low = 'green', high = 'red')
+```
+
+This plot is not clear what's the correlation between density and quality.
+
+Plot using citric acid as color.
+
+```{r echo=FALSE}
+qplot(x = alcohol, y= quality, data = pf, color = citric.acid) +
+  geom_jitter(pch = 16, alpha = 0.4) + 
+  scale_colour_gradient(low = 'green', high = 'red')
+```
+
+This plot is clear. When holding alcohol constant, higher citric acid means higher quality. 
+
+Plot using chlorides as color.
+
+```{r echo=FALSE}
+qplot(x = alcohol, y= quality, data = pf, color = chlorides) +
+  geom_jitter(pch = 16, alpha = 0.4) + 
+  scale_colour_gradient(low = 'green', high = 'red')
+```
+
+From the above colored plot, it seems when chlorides decreases, quality increases with alcohol constant. 
+
+Plot using total sulfur dioxide as color.
+
+```{r echo=FALSE}
+qplot(x = alcohol, y= quality, data = pf, color = total.sulfur.dioxide) +
+  geom_jitter(pch = 16, alpha = 0.4) +
+  scale_colour_gradient(low = 'green', high = 'red')
+```
+
+From the above color plot, it seems higher total sulfur dioxide brings lower quality when holding alcohol constant. 
+
+Density is the another feature of my interest. As I mentioned above, density seems to be connected to fixed acidity and alcohol. I would like to see the scatter plot of density VS fixed acidity and alcohol.
+
+```{r echo=FALSE}
+qplot(x = fixed.acidity, y= density, data = pf, color = alcohol) +
+  geom_jitter(pch = 16, alpha = 0.4) + 
+  scale_colour_gradient(low = 'green', high = 'red')
+```
+
+Yes, it's obvious that there is negative corrleation between alcohol and density, positive correlation between fixed acidity and density.
+
+
+I would like to build a linear model and use the other features to predict red wine quality. I know this set of data may not be very suitable to adapt linear model, but I'm curious what a linear model can tell us. 
+
+```{r echo=FALSE}
+m1 <- lm(formula = quality ~ 0 + alcohol, data = pf, 
+         offset = rep(5, length(quality)))
+m2 <- update(m1, ~ . + sulphates)
+m3 <- update(m2, ~ . + volatile.acidity)
+m4 <- update(m3, ~ . + citric.acid)
+m5 <- update(m4, ~ . + total.sulfur.dioxide)
+m6 <- update(m5, ~ . + density)
+m7 <- update(m6, ~ . + chlorides)
+m8 <- update(m7, ~ . + fixed.acidity)
+m9 <- update(m8, ~ . + pH)
+m10 <- update(m9, ~ . + free.sulfur.dioxide)
+m11 <- update(m10, ~ . + residual.sugar)
+mtable(m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, m11, m11)
+```
+
+From the statistics, we see that with alcohol, sulphates and volatile acidity, the R square value is already very close to the maximum. Adding more other feature does not promote the prediction very much. 
+
+# Multivariate Analysis
+
+### Talk about some of the relationships you observed in this part of the investigation. Were there features that strengthened each other in terms of looking at your feature(s) of interest?
+
+When I explore the features affecting quality, I found that:
+  when holding alcohol constant:
+    lower volatile acidity wine tends to have higher qualtiy 
+    higher ciric wine tends to have higher quality;
+    lower density wine tends to have higher quality;
+    higher sulphates wine tends to have higher quality;
+and etc.
+
+when exploring the correlation between alcohol and density, I found that when holding fixed acidity constant, higher alcohol leads to lower density. 
+
+
+### Were there any interesting or surprising interactions between features?
+
+Yes. From the density VS fixed acidity and alcohol plot, we can see clearly that when holding fixed acidity constant, higher alocohol wine has higher density. This is not surprising, but interesting. 
+
+### OPTIONAL: Did you create any models with your dataset? Discuss the strengths and limitations of your model.
+
+I used linear model to predict quality. Although the prediction is good, I don't think this models is 100% suitable to this case, since there are acturally very weak correlation between quality and other features. The high prediction accuracy probably mainly comes from the fact than quality values are very concentrative. Another thting is that the relation between quality and one other feature may not be linear. For example, the relation between quality and total sulfur dioxide is not linear. Linear model is not working well for such a case. I'm eager to learn the next course which is machine learning. That course should tell me how to predict the feature of interest better. 
+
+------
+
+# Final Plots and Summary
+
+My feature of main interest is quality. I want to show the correlation between quality and alcohol&sulphates. So the first two plots are "distribution of quality" and "scatter plot of quality VS alcohol and sulphates". I'm also interested in what determines the density of red wine. So the last plot I chose is "scatter plot of density VS fixed acidity and alcohol".
+
+### Plot One: Check distribution of quality
+
+```{r echo=FALSE, Plot_one}
+qplot(x = quality, 
+      data = pf, 
+      binwidth = 1, 
+      xlim = c(0, 10),
+      fill=I("blue"), 
+      col=I("red"), 
+      alpha = 0.5) + 
+  labs(title = "Distribution of quality of red wine")
+```  
+
+### Description One
+
+Plot one is the distribution red wine quality. The minimum quality is 3 and the maximum is 8, although from the description features, quality's range is from 0 to 10. Most of the quality values are 5 or 6, so the data is pretty concentrative.
+
+### Plot Two: Correlation between alcohol and quality, sulphates and quality
+
+```{r echo=FALSE, Plot_Two}
+#p1 is the scattplot of quality vs alcohol and sulphates
+p1 <- qplot(x = alcohol, y= quality, data = pf, color = sulphates) +
+  geom_jitter(pch = 16, alpha = 0.5) +
+  scale_colour_gradient(low = 'green', high = 'red') +
+  labs(title = "quality VS alcohol and sulphates")
+#p2 is the boxplot of alcohol using quality as category
+p2 <- ggplot(aes(x = qualFact, y = alcohol), data = pf) +
+  geom_boxplot(outlier.colour = alpha("black", 0.1)) + 
+  geom_point(alpha = 0.1) +
+  labs(title = "alcohol VS qualFact")
+#p3 is the boxplot of sulphates using quality as category
+p3 <- ggplot(aes(x = qualFact, y = sulphates), data = pf) +
+  geom_boxplot(outlier.colour = alpha("black", 0.1)) + 
+  geom_point(alpha = 0.1) +
+  labs(title = "sulphates VS qualFact")
+#arrange the plots
+grid.arrange(p1, arrangeGrob(p2, p3, ncol=1), ncol = 2, widths = c(2, 1))
+```
+
+### Description Two
+
+Alcohol and sulphates are the two features which have the strongest correlation with quality among the features of red wine. From the scatter plot, we see when alcohol increases the quality also increases, and when the sulphates increases, the quality increases. But the correlations between alocol and quality, sulphates and quality are not very strong. This could also be seen from the scatter plot. On the scatter plot, there is not a very obvious border of colors nor an obvious trend line. The boxplots of alchola VS qualFact, and sulphates VS qualFact are more obvious. When the median and average of alchol increase, the quality is mainly incresing, although for qualFact = 5 there is an exception. When the median and average of sulphates increases, quality increases. 
+
+### Plot Three: Correlation between fixed acid and density, alcohol and density
+
+```{r echo=FALSE, Plot_Three}
+qplot(x = fixed.acidity, y= density, data = pf, color = alcohol) +
+  geom_point(pch = 16, alpha = 0.4) + 
+  scale_colour_gradient(low = 'green', high = 'red') + 
+  labs(title = "density VS fixed acidity and alcohol")
+```
+
+### Description Three
+
+Fixed acidity and alcohol are the two most important features determing wine density. Wine with higher fixed acidity tends to have higher density. And higher alcohol makes the wine density smaller. This result could be easily explained. Alcohol has a lower density than water so it can make wine "lighter". But the fixed acidity components have a larger density so that makes wine "heavier".
+
+------
+
+# Reflection
+
+The original dataset of red wine contains 1599 entries with 12 effective features. Later I cut the outliers to suppress the potential noise. When I looked into the data at first glance, I found that the quality is very concentrative. Then I explored each invidual feature and the correlation between these features and quality. Identifying the correlation between one feature and quality is not very easy because it's usually very weak. Alcohol and sulphates are the two features which have the strongest correlation with quality. Eventually I created a linear model to predict quality. The R square value of the model can be very close to 1. But I don't think that is because there is strong correlation between quality and other features. It is because the concentration of the quality feature is pretty high. Although quality levels are from 0 to 10, all the samples' quality values are between 3 and 8 and most of then focus on 5 and 6. When a sample of red wine is supposed to have a very high or low quality, this model may not be able to tell that. That's one limitation of the model. If we can get more samples, and the quality values don't have very high concentration, the model may be working better. Another limitation is that the relation between one feature and quality may not be linear so that linear model is not working well in such a case.
+
+Except for quality, which is the feature of main interest, I also explored which features may determine the density of wine. I found that fixed acidity and alcohol are the two most important features connecting to wine density. Alcohol has a lighter density while fixed acidity components have a heavier density. So wine with higher alcohol tends to have low density and wine with higher fixed acidity tends to have higher density.
